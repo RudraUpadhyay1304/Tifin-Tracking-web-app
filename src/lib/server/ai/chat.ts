@@ -28,7 +28,7 @@ function apiKey(): string | null {
 }
 
 function model(): string {
-  return process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  return process.env.GEMINI_MODEL || "gemini-3.6-flash";
 }
 
 function systemPrompt(): string {
@@ -51,8 +51,10 @@ function systemPrompt(): string {
 
 const CANDIDATE_MODELS = [
   process.env.GEMINI_MODEL,
+  "gemini-3.6-flash",
+  "gemini-3-flash",
+  "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
   "gemini-1.5-flash",
   "gemini-flash-latest",
 ].filter((m): m is string => Boolean(m));
@@ -310,13 +312,14 @@ export async function aiConfirm(
     ];
     try {
       const { text: finalText } = await callGemini(messages, contents2);
-      return { reply: finalText ?? result };
+      return { reply: finalText ?? (result.startsWith("Error:") ? result : `✅ ${result}`) };
     } catch {
-      return { reply: `Action completed successfully: ${result}` };
+      return { reply: result.startsWith("Error:") ? result : `✅ ${result}` };
     }
   } catch (e) {
+    const err = e instanceof Error ? e.message : String(e);
     return {
-      reply: `Action executed: ${proposal.summary}`,
+      reply: `Action result: ${err}`,
     };
   }
 }
