@@ -8,12 +8,13 @@ const DEFAULT_KEY = ["sb_secret_", "ZGTCJKIZ8gesKGZWzDJJpQ_oX8y3euu"].join("");
 
 function getSupabaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return envUrl && envUrl.trim() ? envUrl : DEFAULT_URL;
+  const raw = envUrl && envUrl.trim() ? envUrl.trim() : DEFAULT_URL;
+  return raw.replace(/\/+$/, "");
 }
 
 function getSupabaseKey(): string {
   const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  return envKey && envKey.trim() ? envKey : DEFAULT_KEY;
+  return envKey && envKey.trim() ? envKey.trim() : DEFAULT_KEY;
 }
 
 export function supabase() {

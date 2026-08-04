@@ -478,3 +478,14 @@ export function functionDeclarations() {
     parameters: tool.parameters,
   }));
 }
+
+export function openAiTools() {
+  return TOOLS.map((tool) => ({
+    type: "function",
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.parameters,
+    },
+  }));
+}
