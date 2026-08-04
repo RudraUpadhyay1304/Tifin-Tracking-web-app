@@ -23,16 +23,8 @@ export interface AiResult {
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 
-// Base64 encoded key to avoid GitHub push protection scanner while providing zero-config Vercel AI
-const B64_KEY = "QVEuQWI4Uk42SkNOM0RIWDJ5am9qUGpOTjYxUUhnMXV6am9LMVlpd2czU0ZqNmcxd2tNUQ==";
-
-function apiKey(): string {
-  if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-  try {
-    return Buffer.from(B64_KEY, "base64").toString("utf-8");
-  } catch {
-    return "";
-  }
+function apiKey(): string | null {
+  return process.env.GEMINI_API_KEY || null;
 }
 
 function model(): string {
@@ -140,6 +132,83 @@ function summarizeProposal(name: string, args: Record<string, unknown>): string 
   return `${name} (${prettyArgs})`;
 }
 
+async function parseIntentFallback(userText: string): Promise<AiResult | null> {
+  const text = userText.trim();
+  const lower = text.toLowerCase();
+
+  // Pattern: "Add Rahul Sharma with ₹3000 monthly charge" or "Add customer Rahul 3000"
+  const addMatch = text.match(/^add\s+(?:customer\s+)?(.+?)\s+(?:with\s+)?(?:₹|\$)?(\d+)(?:\s+monthly|\s+charge|\s+₹|\$)?$/i) ??
+                   text.match(/^add\s+(?:customer\s+)?(.+?)\s+(?:with\s+)?(?:₹|\$)?(\d+)/i);
+  if (addMatch) {
+    const name = addMatch[1].replace(/with|charge|monthly|₹|\$/gi, "").trim();
+    const charge = Number(addMatch[2]);
+    if (name && !isNaN(charge) && charge > 0) {
+      const args = { name, monthly_charge: charge };
+      return {
+        proposal: {
+          tool: "add_customer",
+          args,
+          summary: summarizeProposal("add_customer", args),
+        },
+      };
+    }
+  }
+
+  // Pattern: "Record 1500 payment from Rahul" or "Record payment Rahul 1500"
+  const payMatch = text.match(/^record\s+(?:payment\s+)?(?:of\s+)?(?:₹|\$)?(\d+)\s+(?:from\s+)?(.+)/i) ??
+                   text.match(/^record\s+(?:payment\s+)?(.+?)\s+(?:₹|\$)?(\d+)/i);
+  if (payMatch) {
+    let amount: number;
+    let customer: string;
+    if (!isNaN(Number(payMatch[1]))) {
+      amount = Number(payMatch[1]);
+      customer = payMatch[2].trim();
+    } else {
+      customer = payMatch[1].trim();
+      amount = Number(payMatch[2]);
+    }
+    if (customer && !isNaN(amount) && amount > 0) {
+      const args = { customer, amount };
+      return {
+        proposal: {
+          tool: "record_payment",
+          args,
+          summary: summarizeProposal("record_payment", args),
+        },
+      };
+    }
+  }
+
+  // Pattern: "Set Wednesday menu to Paneer"
+  const menuMatch = text.match(/^set\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+menu\s+(?:to\s+)?(.+)/i);
+  if (menuMatch) {
+    const args = { day: menuMatch[1].toLowerCase(), item: menuMatch[2].trim() };
+    return {
+      proposal: {
+        tool: "update_menu",
+        args,
+        summary: summarizeProposal("update_menu", args),
+      },
+    };
+  }
+
+  // Read Queries Fallback
+  if (lower.includes("customer") || lower.includes("list")) {
+    const tool = toolByName("list_customers");
+    if (tool) return { reply: `📊 Customers:\n${await tool.execute({})}` };
+  }
+  if (lower.includes("stat") || lower.includes("earning") || lower.includes("income")) {
+    const tool = toolByName("get_stats");
+    if (tool) return { reply: `📈 Stats:\n${await tool.execute({})}` };
+  }
+  if (lower.includes("menu")) {
+    const tool = toolByName("get_menu");
+    if (tool) return { reply: `🍱 Menu:\n${await tool.execute({})}` };
+  }
+
+  return null;
+}
+
 /** First step: ask the model. Returns a reply, or a write proposal awaiting confirmation. */
 export async function aiChat(
   messages: ChatMessage[],
@@ -190,7 +259,16 @@ export async function aiChat(
 
     return { reply: text ?? "I understand. How else can I help with your tiffin business?" };
   } catch (e) {
+    console.warn("Gemini API call failed, running intent parser fallback:", e);
+    const fallback = await parseIntentFallback(userText);
+    if (fallback) return fallback;
+
     const msg = e instanceof Error ? e.message : "Unknown error";
+    if (msg.includes("401")) {
+      return {
+        reply: `⚠️ Invalid Gemini API Key (Error 401)\n\nTo enable full AI capabilities, generate a free API key at:\n👉 https://aistudio.google.com/apikey\n\nThen add GEMINI_API_KEY in your Vercel Project Settings!`,
+      };
+    }
     return { reply: `AI Chat Error: ${msg.slice(0, 150)}. Please try again.` };
   }
 }
@@ -242,4 +320,5 @@ export async function aiConfirm(
     };
   }
 }
+
 
