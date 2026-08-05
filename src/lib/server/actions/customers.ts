@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -29,10 +29,17 @@ const customerSchema = z.object({
   notes: z.string().trim().max(1000).default(""),
 });
 
+async function requireDb() {
+  const db = await serverSupabase();
+  if (!db) throw new Error("Authentication is not configured or you are not signed in.");
+  return db;
+}
+
 export async function addCustomer(input: z.infer<typeof customerSchema>): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const { error } = await supabase().from("customers").insert({
+    const db = await requireDb();
+    const { error } = await db.from("customers").insert({
       ...data,
       joining_date: data.joining_date ?? null,
     });
@@ -47,7 +54,8 @@ export async function updateCustomer(
 ): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const { error } = await supabase()
+    const db = await requireDb();
+    const { error } = await db
       .from("customers")
       .update({ ...data, joining_date: data.joining_date ?? null })
       .eq("id", id);
@@ -61,7 +69,8 @@ export async function setCustomerStatus(
   status: "active" | "paused" | "inactive",
 ): Promise<ActionResult> {
   return wrap(async () => {
-    const { error } = await supabase().from("customers").update({ status }).eq("id", id);
+    const db = await requireDb();
+    const { error } = await db.from("customers").update({ status }).eq("id", id);
     if (error) throw error;
     revalidatePath("/", "layout");
   });
@@ -69,7 +78,8 @@ export async function setCustomerStatus(
 
 export async function deleteCustomer(id: string): Promise<ActionResult> {
   return wrap(async () => {
-    const { error } = await supabase().from("customers").delete().eq("id", id);
+    const db = await requireDb();
+    const { error } = await db.from("customers").delete().eq("id", id);
     if (error) throw error;
     revalidatePath("/", "layout");
   });

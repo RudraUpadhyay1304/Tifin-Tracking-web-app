@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 import type { DayStatus } from "@/types/db";
 import type { ActionResult } from "./customers";
 
@@ -19,23 +19,26 @@ export async function setDayStatus(
 ): Promise<ActionResult> {
   try {
     const s = statusSchema.parse(status);
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+
     if (s === "delivered") {
-      await supabase()
+      await db
         .from("calendar_days")
         .delete()
         .eq("customer_id", customerId)
         .eq("date", date);
     } else {
-      const { data: existing } = await supabase()
+      const { data: existing } = await db
         .from("calendar_days")
         .select("id")
         .eq("customer_id", customerId)
         .eq("date", date)
         .maybeSingle();
       if (existing) {
-        await supabase().from("calendar_days").update({ status: s }).eq("id", existing.id);
+        await db.from("calendar_days").update({ status: s }).eq("id", existing.id);
       } else {
-        await supabase()
+        await db
           .from("calendar_days")
           .insert({ customer_id: customerId, date, status: s });
       }

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
 const holidaySchema = z.object({
@@ -18,7 +18,9 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
     if (data.end_date < data.start_date) {
       return { ok: false, error: "End date must be after start date" };
     }
-    const { error } = await supabase().from("holidays").insert({
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { error } = await db.from("holidays").insert({
       customer_id: data.customer_id,
       start_date: data.start_date,
       end_date: data.end_date,
@@ -34,7 +36,9 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
 
 export async function deleteHoliday(id: string): Promise<ActionResult> {
   try {
-    const { error } = await supabase().from("holidays").delete().eq("id", id);
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { error } = await db.from("holidays").delete().eq("id", id);
     if (error) throw error;
     revalidatePath("/", "layout");
     return { ok: true };

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
 const paymentSchema = z.object({
@@ -16,7 +16,9 @@ const paymentSchema = z.object({
 export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<ActionResult> {
   try {
     const data = paymentSchema.parse(input);
-    const { error } = await supabase().from("payments").insert(data);
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { error } = await db.from("payments").insert(data);
     if (error) throw error;
     revalidatePath("/", "layout");
     return { ok: true };
@@ -27,7 +29,9 @@ export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<
 
 export async function deletePayment(id: string): Promise<ActionResult> {
   try {
-    const { error } = await supabase().from("payments").delete().eq("id", id);
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { error } = await db.from("payments").delete().eq("id", id);
     if (error) throw error;
     revalidatePath("/", "layout");
     return { ok: true };

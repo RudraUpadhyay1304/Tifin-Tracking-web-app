@@ -1,16 +1,17 @@
-import { supabase } from "./supabase";
+import { supabaseAdmin } from "./supabase";
 
 /**
  * Pushes CSV backups of all tables to the configured Google Sheets web app.
  * Runs entirely in the background — never on the user's request path.
- * No-op unless SHEETS_WEBHOOK_URL is set.
+ * Uses the service_role client (bypasses RLS) so every user's data is
+ * included in the backup. No-op unless SHEETS_WEBHOOK_URL is set.
  */
 export async function syncToSheets(): Promise<{ ok: boolean; error?: string }> {
   const webhook = process.env.SHEETS_WEBHOOK_URL;
   if (!webhook) return { ok: true };
 
   try {
-    const db = supabase();
+    const db = supabaseAdmin();
 
     const [customers, calendar, payments, holidays, menu, settings] = await Promise.all([
       db.from("customers").select("*").order("name"),

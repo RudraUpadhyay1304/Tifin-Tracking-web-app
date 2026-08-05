@@ -176,6 +176,17 @@ export const translations = {
     inactiveCust: "Inactive",
     pause: "Pause",
     resume: "Resume",
+    // auth
+    signIn: "Sign in",
+    signInGoogle: "Sign in with Google",
+    signInSubtitle: "Your own private tiffin workspace",
+    signInError: "Sign-in failed. Please try again.",
+    authSetup:
+      "Google sign-in is not configured yet. Add NEXT_PUBLIC_SUPABASE_ANON_KEY to your environment and enable the Google provider in Supabase.",
+    signOut: "Sign out",
+    signedInAs: "Signed in as",
+    privateWorkspace:
+      "Your data is private and separate. Only you can see your workspace.",
   },
   hi: {
     appName: "टिफिन मैनेजर",
@@ -337,6 +348,17 @@ export const translations = {
     inactiveCust: "बंद",
     pause: "रोकें",
     resume: "फिर चालू करें",
+    // auth
+    signIn: "साइन इन करें",
+    signInGoogle: "Google से साइन इन करें",
+    signInSubtitle: "आपका निजी टिफिन वर्कस्पेस",
+    signInError: "साइन इन नहीं हो पाया। फिर कोशिश करें।",
+    authSetup:
+      "Google साइन-इन अभी सेट नहीं है। Supabase में NEXT_PUBLIC_SUPABASE_ANON_KEY जोड़ें और Google provider चालू करें।",
+    signOut: "साइन आउट",
+    signedInAs: "साइन इन है",
+    privateWorkspace:
+      "आपका डेटा निजी और अलग है। सिर्फ़ आप अपना वर्कस्पेस देख सकते हैं।",
   },
 } as const;
 

@@ -42,6 +42,8 @@ const icons = {
 export function BottomNav({ t }: { t: T }) {
   const pathname = usePathname();
 
+  if (pathname === "/login") return null;
+
   const items = [
     { href: "/dashboard", label: t.home, icon: icons.home },
     { href: "/customers", label: t.customers, icon: icons.customers },

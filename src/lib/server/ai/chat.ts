@@ -140,7 +140,7 @@ async function callNvidiaApi(
   };
 
   const choice = data.choices?.[0]?.message;
-  let text: string | null = choice?.content ?? null;
+  const text: string | null = choice?.content ?? null;
   let functionCall: { name: string; args: Record<string, unknown> } | null = null;
 
   if (choice?.tool_calls && choice.tool_calls.length > 0) {
@@ -236,7 +236,7 @@ async function callOpenCodeApi(
   };
 
   const choice = data.choices?.[0]?.message;
-  let text: string | null = choice?.content ?? null;
+  const text: string | null = choice?.content ?? null;
   let functionCall: { name: string; args: Record<string, unknown> } | null = null;
 
   if (choice?.tool_calls && choice.tool_calls.length > 0) {

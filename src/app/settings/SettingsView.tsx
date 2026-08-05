@@ -4,20 +4,28 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar } from "@/components/TopBar";
 import { Button, Card, Input, SectionTitle, Toggle } from "@/components/ui";
-import { saveSettings, setLanguage, setTheme } from "@/lib/server/actions/settings";
+import {
+  saveSettings,
+  setLanguage,
+  setTheme,
+  signOut,
+} from "@/lib/server/actions/settings";
 import type { Settings } from "@/types/db";
 import type { T } from "@/lib/i18n";
+import type { ServerUser } from "@/lib/server/supabase";
 
 export function SettingsView({
   t,
   lang,
   theme,
   settings,
+  user,
 }: {
   t: T;
   lang: "en" | "hi";
   theme: "light" | "dark";
   settings: Settings;
+  user: ServerUser | null;
 }) {
   const router = useRouter();
   const [sundayOff, setSundayOff] = useState(settings.sunday_off);
@@ -86,6 +94,19 @@ export function SettingsView({
 
       <SectionTitle>{t.about}</SectionTitle>
       <Card className="space-y-4">
+        {user && (
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {t.signedInAs}
+              </p>
+              <p className="text-xs text-slate-400">{user.email ?? user.name}</p>
+            </div>
+            <Button variant="secondary" onClick={() => startTransition(() => signOut())}>
+              {t.signOut}
+            </Button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{t.darkMode}</p>

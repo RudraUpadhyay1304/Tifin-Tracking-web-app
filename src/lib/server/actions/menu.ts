@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
 const menuSchema = z.object({
@@ -19,11 +19,11 @@ const menuSchema = z.object({
 export async function saveMenu(items: { day_of_week: number; item: string }[]): Promise<ActionResult> {
   try {
     const data = menuSchema.parse({ items });
-    for (const m of data.items) {
-      await supabase()
-        .from("menu")
-        .upsert({ day_of_week: m.day_of_week, item: m.item }, { onConflict: "day_of_week" });
-    }
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    await db
+      .from("menu")
+      .upsert(data.items, { onConflict: "user_id,day_of_week" });
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

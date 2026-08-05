@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { supabase } from "../supabase";
+import { serverSupabase } from "../supabase";
 import {
   getCustomers,
   getHolidays,
@@ -49,15 +49,18 @@ async function loadMonthSummary(monthArg?: string) {
   const { start } = monthRange(monthArg);
   const year = Number(start.slice(0, 4));
   const monthIndex = Number(start.slice(5, 7)) - 1;
+  const db = await serverSupabase();
   const [customers, settings, holidays, rows, payments] = await Promise.all([
     getCustomers(),
     getSettings(),
     getHolidays(),
-    supabase()
-      .from("calendar_days")
-      .select("*")
-      .gte("date", startOfMonth(start))
-      .lte("date", endOfMonth(start)),
+    db
+      ? db
+          .from("calendar_days")
+          .select("*")
+          .gte("date", startOfMonth(start))
+          .lte("date", endOfMonth(start))
+      : Promise.resolve({ data: [] }),
     getPaymentsBetween(startOfMonth(start), endOfMonth(start)),
   ]);
   const inputs = {
@@ -253,7 +256,9 @@ const addCustomerTool: ToolDef = {
       notes: z.string().optional().default(""),
     });
     const data = schema.parse(args);
-    const { error } = await supabase().from("customers").insert({
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db.from("customers").insert({
       ...data,
       joining_date: data.joining_date ?? todayKolkata(),
       status: "active",
@@ -285,7 +290,9 @@ const updateCustomerTool: ToolDef = {
     for (const key of ["monthly_charge", "status", "phone", "address", "notes"] as const) {
       if (args[key] !== undefined) update[key] = args[key];
     }
-    const { error } = await supabase().from("customers").update(update).eq("id", c.id);
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db.from("customers").update(update).eq("id", c.id);
     if (error) throw error;
     return `Updated ${c.name}: ${Object.keys(update).join(", ")}.`;
   },
@@ -298,7 +305,9 @@ const deleteCustomerTool: ToolDef = {
   async execute(args) {
     const c = await findCustomer(String(args.name));
     if (!c) throw new Error(`Customer "${args.name}" not found.`);
-    const { error } = await supabase().from("customers").delete().eq("id", c.id);
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db.from("customers").delete().eq("id", c.id);
     if (error) throw error;
     return `Deleted customer ${c.name}.`;
   },
@@ -323,7 +332,9 @@ const recordPaymentTool: ToolDef = {
     if (!c) throw new Error(`Customer "${args.customer}" not found.`);
     const amount = Number(args.amount);
     if (!(amount > 0)) throw new Error("Amount must be positive.");
-    const { error } = await supabase().from("payments").insert({
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db.from("payments").insert({
       customer_id: c.id,
       amount,
       payment_date: (args.date as string | undefined) ?? todayKolkata(),
@@ -359,7 +370,9 @@ const addHolidayTool: ToolDef = {
       if (!c) throw new Error(`Customer "${args.customer}" not found.`);
       customerId = c.id;
     }
-    const { error } = await supabase().from("holidays").insert({
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db.from("holidays").insert({
       customer_id: customerId,
       start_date: start,
       end_date: end,
@@ -388,19 +401,21 @@ const setDayStatusTool: ToolDef = {
     if (!c) throw new Error(`Customer "${args.customer}" not found.`);
     const status = String(args.status);
     const date = String(args.date);
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
     if (status === "delivered") {
-      await supabase().from("calendar_days").delete().eq("customer_id", c.id).eq("date", date);
+      await db.from("calendar_days").delete().eq("customer_id", c.id).eq("date", date);
     } else {
-      const { data: existing } = await supabase()
+      const { data: existing } = await db
         .from("calendar_days")
         .select("id")
         .eq("customer_id", c.id)
         .eq("date", date)
         .maybeSingle();
       if (existing) {
-        await supabase().from("calendar_days").update({ status }).eq("id", existing.id);
+        await db.from("calendar_days").update({ status }).eq("id", existing.id);
       } else {
-        await supabase().from("calendar_days").insert({ customer_id: c.id, date, status });
+        await db.from("calendar_days").insert({ customer_id: c.id, date, status });
       }
     }
     return `Set ${c.name} ${date} to ${status}.`;
@@ -430,9 +445,11 @@ const updateMenuTool: ToolDef = {
     };
     const dow = dayMap[String(args.day).toLowerCase()];
     if (dow === undefined) throw new Error("Invalid day.");
-    const { error } = await supabase()
+    const db = await serverSupabase();
+    if (!db) throw new Error("Authentication is not configured.");
+    const { error } = await db
       .from("menu")
-      .upsert({ day_of_week: dow, item: String(args.item) }, { onConflict: "day_of_week" });
+      .upsert({ day_of_week: dow, item: String(args.item) }, { onConflict: "user_id,day_of_week" });
     if (error) throw error;
     return `Updated ${args.day} menu to "${args.item}".`;
   },

@@ -32,12 +32,34 @@ with a **Gemini-powered AI assistant** and automatic **Google Sheets backup**.
 
 ## Setup (15 minutes)
 
+### 0. Google sign-in (each owner gets their own private data)
+
+Every person who signs in with Google gets a **completely separate workspace** —
+their customers, payments, calendar, menu and settings are isolated from
+everyone else's (Supabase Row Level Security + a `user_id` on every table).
+
+1. In Supabase Dashboard → **Authentication → Providers → Google**: enable it and
+   paste your Google OAuth **Client ID / Secret** (create one at
+   [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services
+   → Credentials → Create OAuth client ID → Web app, with Authorized redirect URI
+   `https://<your-project-ref>.supabase.co/auth/v1/callback`).
+2. In **Authentication → URL Configuration**, add your app URL (and
+   `http://localhost:3000` for local dev).
+3. Run [`supabase/schema.sql`](supabase/schema.sql) once in the SQL Editor
+   (this also resets existing data — fresh start).
+4. Copy `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API) into your
+   environment — it is **required** for sign-in.
+
+After the first login the app remembers the session, so every future visit
+automatically lands on that user's own dashboard — no repeated sign-in needed.
+
 ### 1. Supabase (database)
 
 1. Create a free project at [supabase.com](https://supabase.com)
 2. Open **SQL Editor → New query**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql), run it
 3. Go to **Project Settings → API** and copy:
    - Project URL → `NEXT_PUBLIC_SUPABASE_URL`
+   - `anon` public key → `NEXT_PUBLIC_SUPABASE_ANON_KEY` (required for Google sign-in)
    - `service_role` secret → `SUPABASE_SERVICE_ROLE_KEY`
 
 ### 2. Gemini (AI assistant)
@@ -51,6 +73,7 @@ Copy `.env.example` to `.env.local` (local dev) and set the same variables in Ve
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 GEMINI_API_KEY=your-gemini-key
 GEMINI_MODEL=gemini-2.0-flash
@@ -117,8 +140,12 @@ supabase/
 
 ## Security notes
 
-- All database access happens server-side with the Supabase **service_role** key (never exposed to the browser)
-- **RLS is enabled** on every table with no public policies — the database can only be touched by the server
+- Each Google account's data is **isolated** by Supabase Row Level Security
+  (a `user_id` is stamped on every row and every policy is scoped to
+  `auth.uid()`) — users can never see or modify each other's data
+- All user data access happens server-side with the signed-in user's session;
+  the Supabase **service_role** key is used only for the nightly Sheets backup
+  (never exposed to the browser)
 - All mutations validate input with **zod**; the AI executes the same validated paths
 - The backup webhook is protected with an optional `CRON_SECRET`
 

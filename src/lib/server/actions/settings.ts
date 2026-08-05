@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { supabase } from "../supabase";
+import { redirect } from "next/navigation";
+import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
 const settingsSchema = z.object({
@@ -16,10 +17,9 @@ export async function saveSettings(
 ): Promise<ActionResult> {
   try {
     const data = settingsSchema.parse(input);
-    const { error } = await supabase()
-      .from("settings")
-      .update(data)
-      .eq("id", true);
+    const db = await serverSupabase();
+    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { error } = await db.from("settings").update(data);
     if (error) throw error;
     revalidatePath("/", "layout");
     return { ok: true };
@@ -39,4 +39,13 @@ export async function setTheme(theme: "light" | "dark"): Promise<ActionResult> {
   const store = await cookies();
   store.set("theme", theme, { path: "/", maxAge: 60 * 60 * 24 * 365 });
   return { ok: true };
+}
+
+export async function signOut(): Promise<void> {
+  const db = await serverSupabase();
+  if (db) {
+    await db.auth.signOut();
+  }
+  revalidatePath("/", "layout");
+  redirect("/login");
 }
