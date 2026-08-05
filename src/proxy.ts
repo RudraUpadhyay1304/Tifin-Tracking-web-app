@@ -16,6 +16,7 @@ function supabaseUrl(): string {
 }
 
 export async function proxy(request: NextRequest) {
+/** This function is used as the Next.js middleware. */
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const pathname = request.nextUrl.pathname;
 
@@ -82,7 +83,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // Next.js will pick up the exported `middleware` below.
+
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|apple-icon-180.png|icon-192.png|icon-512.png|icon.svg|sw.js|.*\\.svg).*)",
   ],
 };
+export const middleware = proxy;
