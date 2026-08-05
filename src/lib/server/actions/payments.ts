@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
+import { getErrorMessage } from "@/lib/utils";
+
 const paymentSchema = z.object({
   customer_id: z.string().uuid(),
   amount: z.coerce.number().gt(0, "Amount must be greater than 0").max(1_000_000),
@@ -23,7 +25,7 @@ export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to record payment" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }
 
@@ -36,6 +38,6 @@ export async function deletePayment(id: string): Promise<ActionResult> {
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to delete payment" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }

@@ -37,7 +37,7 @@ export function getSupabaseAnonKeyConfigured(): boolean {
 /** Authenticated per-user client. Returns null when auth is not configured. */
 export async function serverSupabase() {
   const url = getSupabaseUrl();
-  const anonKey = getSupabaseAnonKey();
+  const anonKey = getSupabaseAnonKey() || getSupabaseServiceKey();
   if (!anonKey) return null;
 
   const cookieStore = await cookies();

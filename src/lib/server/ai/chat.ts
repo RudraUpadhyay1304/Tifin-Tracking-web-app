@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { functionDeclarations, openAiTools, toolByName, WRITE_TOOLS } from "./tools";
-import { todayKolkata } from "@/lib/utils";
+import { endOfMonth, getErrorMessage, inr, startOfMonth, todayKolkata } from "@/lib/utils";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -470,7 +470,7 @@ export async function aiChat(
       try {
         result = await tool.execute(functionCall.args);
       } catch (e) {
-        result = `Error: ${e instanceof Error ? e.message : "Unknown error"}`;
+        result = `Error: ${getErrorMessage(e)}`;
       }
 
       try {
@@ -511,7 +511,7 @@ export async function aiConfirm(
       result = await tool.execute(proposal.args);
       revalidatePath("/", "layout");
     } catch (e) {
-      result = `Error: ${e instanceof Error ? e.message : "Unknown error"}`;
+      result = `Error: ${getErrorMessage(e)}`;
     }
 
     let msgs = messages;

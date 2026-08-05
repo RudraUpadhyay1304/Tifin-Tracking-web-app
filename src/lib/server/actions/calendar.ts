@@ -6,6 +6,8 @@ import { serverSupabase } from "../supabase";
 import type { DayStatus } from "@/types/db";
 import type { ActionResult } from "./customers";
 
+import { getErrorMessage } from "@/lib/utils";
+
 const statusSchema = z.enum(["delivered", "sunday_off", "holiday", "skipped", "extra"]);
 
 /**
@@ -46,6 +48,6 @@ export async function setDayStatus(
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to update day" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }

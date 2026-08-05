@@ -4,6 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { serverSupabase } from "../supabase";
 
+import { getErrorMessage } from "@/lib/utils";
+
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 function wrap<T>(fn: () => Promise<T>): Promise<ActionResult> {
@@ -11,7 +13,7 @@ function wrap<T>(fn: () => Promise<T>): Promise<ActionResult> {
     .then(() => ({ ok: true as const }))
     .catch((e: unknown) => ({
       ok: false as const,
-      error: e instanceof Error ? e.message : "Unknown error",
+      error: getErrorMessage(e),
     }));
 }
 

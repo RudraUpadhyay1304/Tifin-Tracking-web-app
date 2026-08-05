@@ -4,6 +4,25 @@ export function inr(n: number): string {
   return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
 
+export function getErrorMessage(e: unknown): string {
+  if (!e) return "An unknown error occurred.";
+  if (e instanceof Error) return e.message;
+  if (typeof e === "string") return e;
+  if (typeof e === "object") {
+    const obj = e as Record<string, unknown>;
+    if (typeof obj.message === "string" && obj.message) return obj.message;
+    if (typeof obj.error_description === "string" && obj.error_description) return obj.error_description;
+    if (typeof obj.details === "string" && obj.details) return obj.details;
+    if (typeof obj.hint === "string" && obj.hint) return `${obj.message || "Error"} (${obj.hint})`;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return "An unknown error occurred.";
+    }
+  }
+  return String(e);
+}
+
 export function inr2(n: number): string {
   return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }

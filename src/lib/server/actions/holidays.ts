@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
+import { getErrorMessage } from "@/lib/utils";
+
 const holidaySchema = z.object({
   customer_id: z.string().uuid().nullable().default(null),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -30,7 +32,7 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to add holiday" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }
 
@@ -43,6 +45,6 @@ export async function deleteHoliday(id: string): Promise<ActionResult> {
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to delete holiday" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }

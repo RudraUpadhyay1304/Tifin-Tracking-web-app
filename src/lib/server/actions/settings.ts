@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
+import { getErrorMessage } from "@/lib/utils";
+
 const settingsSchema = z.object({
   sunday_off: z.boolean(),
   business_name: z.string().trim().max(60),
@@ -24,7 +26,7 @@ export async function saveSettings(
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to save settings" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }
 

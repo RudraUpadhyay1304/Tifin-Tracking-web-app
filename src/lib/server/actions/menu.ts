@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 
+import { getErrorMessage } from "@/lib/utils";
+
 const menuSchema = z.object({
   items: z
     .array(
@@ -27,6 +29,6 @@ export async function saveMenu(items: { day_of_week: number; item: string }[]): 
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Failed to save menu" };
+    return { ok: false, error: getErrorMessage(e) };
   }
 }
