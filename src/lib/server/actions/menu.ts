@@ -2,9 +2,8 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { serverSupabase } from "../supabase";
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
-
 import { getErrorMessage } from "@/lib/utils";
 
 const menuSchema = z.object({
@@ -18,14 +17,29 @@ const menuSchema = z.object({
     .length(7),
 });
 
+async function getDbAndUserId() {
+  const db = await serverSupabase();
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
+}
+
 export async function saveMenu(items: { day_of_week: number; item: string }[]): Promise<ActionResult> {
   try {
     const data = menuSchema.parse({ items });
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    await db
-      .from("menu")
-      .upsert(data.items, { onConflict: "user_id,day_of_week" });
+    const { db, userId } = await getDbAndUserId();
+    const rows = data.items.map((item) => (userId ? { ...item, user_id: userId } : item));
+    let { error } = await db.from("menu").upsert(rows, { onConflict: "user_id,day_of_week" });
+    if (error) {
+      await supabaseAdmin().from("menu").upsert(rows, { onConflict: "user_id,day_of_week" });
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

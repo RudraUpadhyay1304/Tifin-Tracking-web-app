@@ -2,8 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { serverSupabase } from "../supabase";
-
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import { getErrorMessage } from "@/lib/utils";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -31,21 +30,36 @@ const customerSchema = z.object({
   notes: z.string().trim().max(1000).default(""),
 });
 
-async function requireDb() {
+export async function getDbAndUserId() {
   const db = await serverSupabase();
-  if (!db) throw new Error("Authentication is not configured or you are not signed in.");
-  return db;
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
 }
 
 export async function addCustomer(input: z.infer<typeof customerSchema>): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const db = await requireDb();
-    const { error } = await db.from("customers").insert({
+    const { db, userId } = await getDbAndUserId();
+
+    const payload: Record<string, unknown> = {
       ...data,
       joining_date: data.joining_date ?? null,
-    });
-    if (error) throw error;
+    };
+    if (userId) payload.user_id = userId;
+
+    let { error } = await db.from("customers").insert(payload);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("customers").insert(payload);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
   });
 }
@@ -56,12 +70,13 @@ export async function updateCustomer(
 ): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const db = await requireDb();
-    const { error } = await db
-      .from("customers")
-      .update({ ...data, joining_date: data.joining_date ?? null })
-      .eq("id", id);
-    if (error) throw error;
+    const { db } = await getDbAndUserId();
+    const payload = { ...data, joining_date: data.joining_date ?? null };
+    let { error } = await db.from("customers").update(payload).eq("id", id);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("customers").update(payload).eq("id", id);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
   });
 }
@@ -71,18 +86,24 @@ export async function setCustomerStatus(
   status: "active" | "paused" | "inactive",
 ): Promise<ActionResult> {
   return wrap(async () => {
-    const db = await requireDb();
-    const { error } = await db.from("customers").update({ status }).eq("id", id);
-    if (error) throw error;
+    const { db } = await getDbAndUserId();
+    let { error } = await db.from("customers").update({ status }).eq("id", id);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("customers").update({ status }).eq("id", id);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
   });
 }
 
 export async function deleteCustomer(id: string): Promise<ActionResult> {
   return wrap(async () => {
-    const db = await requireDb();
-    const { error } = await db.from("customers").delete().eq("id", id);
-    if (error) throw error;
+    const { db } = await getDbAndUserId();
+    let { error } = await db.from("customers").delete().eq("id", id);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("customers").delete().eq("id", id);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
   });
 }

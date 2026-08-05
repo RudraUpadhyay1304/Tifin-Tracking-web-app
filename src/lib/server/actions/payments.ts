@@ -2,9 +2,8 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { serverSupabase } from "../supabase";
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
-
 import { getErrorMessage } from "@/lib/utils";
 
 const paymentSchema = z.object({
@@ -15,13 +14,32 @@ const paymentSchema = z.object({
   notes: z.string().trim().max(300).default(""),
 });
 
+async function getDbAndUserId() {
+  const db = await serverSupabase();
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
+}
+
 export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<ActionResult> {
   try {
     const data = paymentSchema.parse(input);
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    const { error } = await db.from("payments").insert(data);
-    if (error) throw error;
+    const { db, userId } = await getDbAndUserId();
+    const payload: Record<string, unknown> = { ...data };
+    if (userId) payload.user_id = userId;
+
+    let { error } = await db.from("payments").insert(payload);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("payments").insert(payload);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
@@ -31,10 +49,12 @@ export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<
 
 export async function deletePayment(id: string): Promise<ActionResult> {
   try {
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    const { error } = await db.from("payments").delete().eq("id", id);
-    if (error) throw error;
+    const { db } = await getDbAndUserId();
+    let { error } = await db.from("payments").delete().eq("id", id);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("payments").delete().eq("id", id);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

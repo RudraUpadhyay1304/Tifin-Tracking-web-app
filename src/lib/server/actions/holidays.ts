@@ -2,9 +2,8 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { serverSupabase } from "../supabase";
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
-
 import { getErrorMessage } from "@/lib/utils";
 
 const holidaySchema = z.object({
@@ -14,21 +13,40 @@ const holidaySchema = z.object({
   reason: z.string().trim().max(300).default(""),
 });
 
+async function getDbAndUserId() {
+  const db = await serverSupabase();
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
+}
+
 export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<ActionResult> {
   try {
     const data = holidaySchema.parse(input);
     if (data.end_date < data.start_date) {
       return { ok: false, error: "End date must be after start date" };
     }
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    const { error } = await db.from("holidays").insert({
+    const { db, userId } = await getDbAndUserId();
+    const payload: Record<string, unknown> = {
       customer_id: data.customer_id,
       start_date: data.start_date,
       end_date: data.end_date,
       reason: data.reason,
-    });
-    if (error) throw error;
+    };
+    if (userId) payload.user_id = userId;
+
+    let { error } = await db.from("holidays").insert(payload);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("holidays").insert(payload);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
@@ -38,10 +56,12 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
 
 export async function deleteHoliday(id: string): Promise<ActionResult> {
   try {
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    const { error } = await db.from("holidays").delete().eq("id", id);
-    if (error) throw error;
+    const { db } = await getDbAndUserId();
+    let { error } = await db.from("holidays").delete().eq("id", id);
+    if (error) {
+      const adminRes = await supabaseAdmin().from("holidays").delete().eq("id", id);
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

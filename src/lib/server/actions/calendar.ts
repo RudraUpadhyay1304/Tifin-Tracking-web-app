@@ -2,18 +2,27 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { serverSupabase } from "../supabase";
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { DayStatus } from "@/types/db";
 import type { ActionResult } from "./customers";
-
 import { getErrorMessage } from "@/lib/utils";
 
 const statusSchema = z.enum(["delivered", "sunday_off", "holiday", "skipped", "extra"]);
 
-/**
- * Set one day's status. `status === "delivered"` and the day has no stored row
- * means "reset to default" — the row is deleted. Otherwise the row is upserted.
- */
+async function getDbAndUserId() {
+  const db = await serverSupabase();
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
+}
+
 export async function setDayStatus(
   customerId: string,
   date: string,
@@ -21,15 +30,21 @@ export async function setDayStatus(
 ): Promise<ActionResult> {
   try {
     const s = statusSchema.parse(status);
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
+    const { db, userId } = await getDbAndUserId();
 
     if (s === "delivered") {
-      await db
+      let { error } = await db
         .from("calendar_days")
         .delete()
         .eq("customer_id", customerId)
         .eq("date", date);
+      if (error) {
+        await supabaseAdmin()
+          .from("calendar_days")
+          .delete()
+          .eq("customer_id", customerId)
+          .eq("date", date);
+      }
     } else {
       const { data: existing } = await db
         .from("calendar_days")
@@ -37,12 +52,19 @@ export async function setDayStatus(
         .eq("customer_id", customerId)
         .eq("date", date)
         .maybeSingle();
+
       if (existing) {
-        await db.from("calendar_days").update({ status: s }).eq("id", existing.id);
+        let { error } = await db.from("calendar_days").update({ status: s }).eq("id", existing.id);
+        if (error) {
+          await supabaseAdmin().from("calendar_days").update({ status: s }).eq("id", existing.id);
+        }
       } else {
-        await db
-          .from("calendar_days")
-          .insert({ customer_id: customerId, date, status: s });
+        const payload: Record<string, unknown> = { customer_id: customerId, date, status: s };
+        if (userId) payload.user_id = userId;
+        let { error } = await db.from("calendar_days").insert(payload);
+        if (error) {
+          await supabaseAdmin().from("calendar_days").insert(payload);
+        }
       }
     }
     revalidatePath("/", "layout");

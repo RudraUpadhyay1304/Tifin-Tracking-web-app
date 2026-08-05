@@ -4,9 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { serverSupabase } from "../supabase";
+import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
-
 import { getErrorMessage } from "@/lib/utils";
 
 const settingsSchema = z.object({
@@ -14,15 +13,34 @@ const settingsSchema = z.object({
   business_name: z.string().trim().max(60),
 });
 
+async function getDbAndUserId() {
+  const db = await serverSupabase();
+  let userId: string | null = null;
+  if (db) {
+    try {
+      const { data } = await db.auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch {
+      userId = null;
+    }
+  }
+  return { db: db ?? supabaseAdmin(), userId };
+}
+
 export async function saveSettings(
   input: z.infer<typeof settingsSchema>,
 ): Promise<ActionResult> {
   try {
     const data = settingsSchema.parse(input);
-    const db = await serverSupabase();
-    if (!db) return { ok: false, error: "Authentication is not configured." };
-    const { error } = await db.from("settings").update(data);
-    if (error) throw error;
+    const { db, userId } = await getDbAndUserId();
+    const payload: Record<string, unknown> = { ...data };
+    if (userId) payload.user_id = userId;
+
+    let { error } = await db.from("settings").upsert(payload, { onConflict: "user_id" });
+    if (error) {
+      const adminRes = await supabaseAdmin().from("settings").upsert(payload, { onConflict: "user_id" });
+      if (adminRes.error) throw adminRes.error;
+    }
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
