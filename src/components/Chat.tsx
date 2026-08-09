@@ -19,7 +19,14 @@ export function Chat({
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? (JSON.parse(saved) as ChatMessage[]) : [];
+      if (!saved) return [];
+      const parsed = JSON.parse(saved) as ChatMessage[];
+      return parsed.filter(
+        (m) =>
+          !m.text.includes("schema cache") &&
+          !m.text.includes("database schema") &&
+          !m.text.includes("technical issue with the database"),
+      );
     } catch {
       return [];
     }

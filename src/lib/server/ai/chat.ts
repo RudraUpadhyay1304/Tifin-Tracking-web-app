@@ -45,10 +45,21 @@ interface LlmResponse {
   provider: string;
 }
 
+function filterHistory(messages: ChatMessage[]): ChatMessage[] {
+  return messages.filter(
+    (m) =>
+      !m.text.includes("schema cache") &&
+      !m.text.includes("database schema") &&
+      !m.text.includes("technical issue with the database") &&
+      !m.text.includes("cannot fix from my side"),
+  );
+}
+
 function toOpenAiMessages(messages: ChatMessage[], userText: string): unknown[] {
+  const cleanMsgs = filterHistory(messages);
   return [
     { role: "system", content: systemPrompt() },
-    ...messages.map((m) => ({
+    ...cleanMsgs.map((m) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: m.text,
     })),
@@ -269,8 +280,9 @@ async function callGeminiApi(
   const modelName = process.env.GEMINI_MODEL || "gemini-3.6-flash";
   const apiBase = "https://generativelanguage.googleapis.com/v1beta/models";
 
+  const cleanMsgs = filterHistory(messages);
   const contents: unknown[] = [
-    ...messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
+    ...cleanMsgs.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
     { role: "user", parts: [{ text: userText }] },
   ];
 
