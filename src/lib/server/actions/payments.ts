@@ -15,26 +15,10 @@ const paymentSchema = z.object({
   notes: z.string().trim().max(300).default(""),
 });
 
-async function getDbAndUserId() {
-  const db = await serverSupabase();
-  let userId: string | null = null;
-  if (db) {
-    try {
-      const { data } = await db.auth.getUser();
-      userId = data.user?.id ?? null;
-    } catch {
-      userId = null;
-    }
-  }
-  return { db: db ?? supabaseAdmin(), userId };
-}
-
 export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<ActionResult> {
   try {
     const data = paymentSchema.parse(input);
-    const { userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
-    if (userId) payload.user_id = userId;
 
     const res = await smartInsert("payments", payload);
     if (res.error) throw res.error;
@@ -48,7 +32,7 @@ export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<
 
 export async function deletePayment(id: string): Promise<ActionResult> {
   try {
-    const { db } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
     let { error } = await db.from("payments").delete().eq("id", id);
     if (error) {
       const adminRes = await supabaseAdmin().from("payments").delete().eq("id", id);

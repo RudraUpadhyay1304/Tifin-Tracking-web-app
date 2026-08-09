@@ -31,30 +31,14 @@ const customerSchema = z.object({
   notes: z.string().trim().max(1000).default(""),
 });
 
-export async function getDbAndUserId() {
-  const db = await serverSupabase();
-  let userId: string | null = null;
-  if (db) {
-    try {
-      const { data } = await db.auth.getUser();
-      userId = data.user?.id ?? null;
-    } catch {
-      userId = null;
-    }
-  }
-  return { db: db ?? supabaseAdmin(), userId };
-}
-
 export async function addCustomer(input: z.infer<typeof customerSchema>): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const { userId } = await getDbAndUserId();
 
     const payload: Record<string, unknown> = {
       ...data,
       joining_date: data.joining_date ?? null,
     };
-    if (userId) payload.user_id = userId;
 
     const res = await smartInsert("customers", payload);
     if (res.error) throw res.error;
@@ -69,7 +53,7 @@ export async function updateCustomer(
 ): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const { db } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
     const payload = { ...data, joining_date: data.joining_date ?? null };
     let { error } = await db.from("customers").update(payload).eq("id", id);
     if (error) {
@@ -85,7 +69,7 @@ export async function setCustomerStatus(
   status: "active" | "paused" | "inactive",
 ): Promise<ActionResult> {
   return wrap(async () => {
-    const { db } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
     let { error } = await db.from("customers").update({ status }).eq("id", id);
     if (error) {
       const adminRes = await supabaseAdmin().from("customers").update({ status }).eq("id", id);
@@ -97,7 +81,7 @@ export async function setCustomerStatus(
 
 export async function deleteCustomer(id: string): Promise<ActionResult> {
   return wrap(async () => {
-    const { db } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
     let { error } = await db.from("customers").delete().eq("id", id);
     if (error) {
       const adminRes = await supabaseAdmin().from("customers").delete().eq("id", id);

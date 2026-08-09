@@ -10,20 +10,6 @@ import { smartInsert } from "./db-utils";
 
 const statusSchema = z.enum(["delivered", "sunday_off", "holiday", "skipped", "extra"]);
 
-async function getDbAndUserId() {
-  const db = await serverSupabase();
-  let userId: string | null = null;
-  if (db) {
-    try {
-      const { data } = await db.auth.getUser();
-      userId = data.user?.id ?? null;
-    } catch {
-      userId = null;
-    }
-  }
-  return { db: db ?? supabaseAdmin(), userId };
-}
-
 export async function setDayStatus(
   customerId: string,
   date: string,
@@ -31,7 +17,7 @@ export async function setDayStatus(
 ): Promise<ActionResult> {
   try {
     const s = statusSchema.parse(status);
-    const { db, userId } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
 
     if (s === "delivered") {
       let { error } = await db
@@ -61,7 +47,6 @@ export async function setDayStatus(
         }
       } else {
         const payload: Record<string, unknown> = { customer_id: customerId, date, status: s };
-        if (userId) payload.user_id = userId;
         const res = await smartInsert("calendar_days", payload);
         if (res.error) throw res.error;
       }

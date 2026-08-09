@@ -14,34 +14,18 @@ const holidaySchema = z.object({
   reason: z.string().trim().max(300).default(""),
 });
 
-async function getDbAndUserId() {
-  const db = await serverSupabase();
-  let userId: string | null = null;
-  if (db) {
-    try {
-      const { data } = await db.auth.getUser();
-      userId = data.user?.id ?? null;
-    } catch {
-      userId = null;
-    }
-  }
-  return { db: db ?? supabaseAdmin(), userId };
-}
-
 export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<ActionResult> {
   try {
     const data = holidaySchema.parse(input);
     if (data.end_date < data.start_date) {
       return { ok: false, error: "End date must be after start date" };
     }
-    const { userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = {
       customer_id: data.customer_id,
       start_date: data.start_date,
       end_date: data.end_date,
       reason: data.reason,
     };
-    if (userId) payload.user_id = userId;
 
     const res = await smartInsert("holidays", payload);
     if (res.error) throw res.error;
@@ -55,7 +39,7 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
 
 export async function deleteHoliday(id: string): Promise<ActionResult> {
   try {
-    const { db } = await getDbAndUserId();
+    const db = (await serverSupabase()) ?? supabaseAdmin();
     let { error } = await db.from("holidays").delete().eq("id", id);
     if (error) {
       const adminRes = await supabaseAdmin().from("holidays").delete().eq("id", id);

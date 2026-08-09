@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { serverSupabase, supabaseAdmin } from "../supabase";
+import { serverSupabase } from "../supabase";
 import type { ActionResult } from "./customers";
 import { getErrorMessage } from "@/lib/utils";
 import { smartUpsert } from "./db-utils";
@@ -14,30 +14,14 @@ const settingsSchema = z.object({
   business_name: z.string().trim().max(60),
 });
 
-async function getDbAndUserId() {
-  const db = await serverSupabase();
-  let userId: string | null = null;
-  if (db) {
-    try {
-      const { data } = await db.auth.getUser();
-      userId = data.user?.id ?? null;
-    } catch {
-      userId = null;
-    }
-  }
-  return { db: db ?? supabaseAdmin(), userId };
-}
-
 export async function saveSettings(
   input: z.infer<typeof settingsSchema>,
 ): Promise<ActionResult> {
   try {
     const data = settingsSchema.parse(input);
-    const { userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
-    if (userId) payload.user_id = userId;
 
-    const res = await smartUpsert("settings", payload, { onConflict: userId ? "user_id" : undefined });
+    const res = await smartUpsert("settings", payload);
     if (res.error) throw res.error;
 
     revalidatePath("/", "layout");
