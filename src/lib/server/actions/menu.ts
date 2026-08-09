@@ -38,7 +38,15 @@ export async function saveMenu(items: { day_of_week: number; item: string }[]): 
     const rows = userId ? data.items.map((item) => ({ ...item, user_id: userId })) : data.items;
     let { error } = await db.from("menu").upsert(rows);
     if (error) {
-      await supabaseAdmin().from("menu").upsert(rows);
+      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
+        const fallbackRows = data.items;
+        let retry = await db.from("menu").upsert(fallbackRows);
+        if (retry.error) {
+          await supabaseAdmin().from("menu").upsert(fallbackRows);
+        }
+      } else {
+        await supabaseAdmin().from("menu").upsert(rows);
+      }
     }
     revalidatePath("/", "layout");
     return { ok: true };

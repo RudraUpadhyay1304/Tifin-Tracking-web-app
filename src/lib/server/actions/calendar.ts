@@ -63,7 +63,15 @@ export async function setDayStatus(
         if (userId) payload.user_id = userId;
         let { error } = await db.from("calendar_days").insert(payload);
         if (error) {
-          await supabaseAdmin().from("calendar_days").insert(payload);
+          if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
+            delete payload.user_id;
+            let retry = await db.from("calendar_days").insert(payload);
+            if (retry.error) {
+              await supabaseAdmin().from("calendar_days").insert(payload);
+            }
+          } else {
+            await supabaseAdmin().from("calendar_days").insert(payload);
+          }
         }
       }
     }

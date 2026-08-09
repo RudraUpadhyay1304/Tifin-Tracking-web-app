@@ -38,8 +38,17 @@ export async function saveSettings(
 
     let { error } = await db.from("settings").upsert(payload);
     if (error) {
-      const adminRes = await supabaseAdmin().from("settings").upsert(payload);
-      if (adminRes.error) throw adminRes.error;
+      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
+        delete payload.user_id;
+        let retry = await db.from("settings").upsert(payload);
+        if (retry.error) {
+          const adminRes = await supabaseAdmin().from("settings").upsert(payload);
+          if (adminRes.error) throw adminRes.error;
+        }
+      } else {
+        const adminRes = await supabaseAdmin().from("settings").upsert(payload);
+        if (adminRes.error) throw adminRes.error;
+      }
     }
     revalidatePath("/", "layout");
     return { ok: true };

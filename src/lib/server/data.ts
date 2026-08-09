@@ -30,12 +30,16 @@ export async function getSettings(): Promise<Settings> {
       const { data: { user } } = await db.auth.getUser();
       const seedPayload: Record<string, unknown> = { sunday_off: true, business_name: "My Tiffin Service" };
       if (user?.id) seedPayload.user_id = user.id;
-      await db
+      let { error: seedErr } = await db
         .from("settings")
         .upsert(
           seedPayload,
-          { onConflict: "user_id", ignoreDuplicates: true },
+          { ignoreDuplicates: true },
         );
+      if (seedErr && (seedErr.message?.includes("user_id") || seedErr.message?.includes("schema cache"))) {
+        delete seedPayload.user_id;
+        await db.from("settings").upsert(seedPayload, { ignoreDuplicates: true });
+      }
       const { data: inserted } = await db.from("settings").select("*").maybeSingle();
       data = inserted;
     }

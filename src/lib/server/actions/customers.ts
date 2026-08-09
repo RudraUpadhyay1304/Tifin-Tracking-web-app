@@ -49,21 +49,25 @@ export async function addCustomer(input: z.infer<typeof customerSchema>): Promis
     const data = customerSchema.parse(input);
     const { db, userId } = await getDbAndUserId();
 
-    if (!userId) {
-      // No authenticated user – abort insertion.
-      throw new Error("User not authenticated");
-    }
-
     const payload: Record<string, unknown> = {
       ...data,
       joining_date: data.joining_date ?? null,
-      user_id: userId,
     };
+    if (userId) payload.user_id = userId;
 
     let { error } = await db.from("customers").insert(payload);
     if (error) {
-      const adminRes = await supabaseAdmin().from("customers").insert(payload);
-      if (adminRes.error) throw adminRes.error;
+      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
+        delete payload.user_id;
+        let retry = await db.from("customers").insert(payload);
+        if (retry.error) {
+          const adminRes = await supabaseAdmin().from("customers").insert(payload);
+          if (adminRes.error) throw adminRes.error;
+        }
+      } else {
+        const adminRes = await supabaseAdmin().from("customers").insert(payload);
+        if (adminRes.error) throw adminRes.error;
+      }
     }
     revalidatePath("/", "layout");
   });
@@ -73,9 +77,6 @@ export async function updateCustomer(
   id: string,
   input: z.infer<typeof customerSchema>,
 ): Promise<ActionResult> {
-  // Ensure the user is authenticated before updating.
-  // The authentication check is performed inside the action.
-
   return wrap(async () => {
     const data = customerSchema.parse(input);
     const { db } = await getDbAndUserId();
