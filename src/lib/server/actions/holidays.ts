@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
 import { getErrorMessage } from "@/lib/utils";
+import { smartInsert } from "./db-utils";
 
 const holidaySchema = z.object({
   customer_id: z.string().uuid().nullable().default(null),
@@ -33,7 +34,7 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
     if (data.end_date < data.start_date) {
       return { ok: false, error: "End date must be after start date" };
     }
-    const { db, userId } = await getDbAndUserId();
+    const { userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = {
       customer_id: data.customer_id,
       start_date: data.start_date,
@@ -42,20 +43,9 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
     };
     if (userId) payload.user_id = userId;
 
-    let { error } = await db.from("holidays").insert(payload);
-    if (error) {
-      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
-        delete payload.user_id;
-        let retry = await db.from("holidays").insert(payload);
-        if (retry.error) {
-          const adminRes = await supabaseAdmin().from("holidays").insert(payload);
-          if (adminRes.error) throw adminRes.error;
-        }
-      } else {
-        const adminRes = await supabaseAdmin().from("holidays").insert(payload);
-        if (adminRes.error) throw adminRes.error;
-      }
-    }
+    const res = await smartInsert("holidays", payload);
+    if (res.error) throw res.error;
+
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { serverSupabase, supabaseAdmin } from "../supabase";
 import { getErrorMessage } from "@/lib/utils";
+import { smartInsert } from "./db-utils";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -47,7 +48,7 @@ export async function getDbAndUserId() {
 export async function addCustomer(input: z.infer<typeof customerSchema>): Promise<ActionResult> {
   return wrap(async () => {
     const data = customerSchema.parse(input);
-    const { db, userId } = await getDbAndUserId();
+    const { userId } = await getDbAndUserId();
 
     const payload: Record<string, unknown> = {
       ...data,
@@ -55,20 +56,9 @@ export async function addCustomer(input: z.infer<typeof customerSchema>): Promis
     };
     if (userId) payload.user_id = userId;
 
-    let { error } = await db.from("customers").insert(payload);
-    if (error) {
-      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
-        delete payload.user_id;
-        let retry = await db.from("customers").insert(payload);
-        if (retry.error) {
-          const adminRes = await supabaseAdmin().from("customers").insert(payload);
-          if (adminRes.error) throw adminRes.error;
-        }
-      } else {
-        const adminRes = await supabaseAdmin().from("customers").insert(payload);
-        if (adminRes.error) throw adminRes.error;
-      }
-    }
+    const res = await smartInsert("customers", payload);
+    if (res.error) throw res.error;
+
     revalidatePath("/", "layout");
   });
 }

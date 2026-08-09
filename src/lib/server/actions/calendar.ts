@@ -6,6 +6,7 @@ import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { DayStatus } from "@/types/db";
 import type { ActionResult } from "./customers";
 import { getErrorMessage } from "@/lib/utils";
+import { smartInsert } from "./db-utils";
 
 const statusSchema = z.enum(["delivered", "sunday_off", "holiday", "skipped", "extra"]);
 
@@ -61,18 +62,8 @@ export async function setDayStatus(
       } else {
         const payload: Record<string, unknown> = { customer_id: customerId, date, status: s };
         if (userId) payload.user_id = userId;
-        let { error } = await db.from("calendar_days").insert(payload);
-        if (error) {
-          if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
-            delete payload.user_id;
-            let retry = await db.from("calendar_days").insert(payload);
-            if (retry.error) {
-              await supabaseAdmin().from("calendar_days").insert(payload);
-            }
-          } else {
-            await supabaseAdmin().from("calendar_days").insert(payload);
-          }
-        }
+        const res = await smartInsert("calendar_days", payload);
+        if (res.error) throw res.error;
       }
     }
     revalidatePath("/", "layout");

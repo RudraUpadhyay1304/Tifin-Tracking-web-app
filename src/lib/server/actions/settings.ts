@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { serverSupabase, supabaseAdmin } from "../supabase";
 import type { ActionResult } from "./customers";
 import { getErrorMessage } from "@/lib/utils";
+import { smartUpsert } from "./db-utils";
 
 const settingsSchema = z.object({
   sunday_off: z.boolean(),
@@ -32,24 +33,13 @@ export async function saveSettings(
 ): Promise<ActionResult> {
   try {
     const data = settingsSchema.parse(input);
-    const { db, userId } = await getDbAndUserId();
+    const { userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
     if (userId) payload.user_id = userId;
 
-    let { error } = await db.from("settings").upsert(payload);
-    if (error) {
-      if (error.message?.includes("user_id") || error.message?.includes("schema cache")) {
-        delete payload.user_id;
-        let retry = await db.from("settings").upsert(payload);
-        if (retry.error) {
-          const adminRes = await supabaseAdmin().from("settings").upsert(payload);
-          if (adminRes.error) throw adminRes.error;
-        }
-      } else {
-        const adminRes = await supabaseAdmin().from("settings").upsert(payload);
-        if (adminRes.error) throw adminRes.error;
-      }
-    }
+    const res = await smartUpsert("settings", payload, { onConflict: userId ? "user_id" : undefined });
+    if (res.error) throw res.error;
+
     revalidatePath("/", "layout");
     return { ok: true };
   } catch (e) {
