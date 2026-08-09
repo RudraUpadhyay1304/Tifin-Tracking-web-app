@@ -366,11 +366,11 @@ async function callAiCascade(
 }
 
 async function parseIntentFallback(userText: string): Promise<AiResult | null> {
-  const text = userText.trim();
+  const text = userText.trim().replace(/^["'“`«]+|["'”`»]+$/g, "").trim();
   const lower = text.toLowerCase();
 
-  // Pattern: "Add Rahul Sharma with ₹3000 monthly charge"
-  const addMatch = text.match(/^add\s+(?:customer\s+)?(.+?)\s+(?:with\s+)?(?:₹|\$)?(\d+)(?:\s+monthly|\s+charge|\s+₹|\$)?$/i) ??
+  // Pattern: "Add Rahul Sharma with ₹3000 monthly charge" or Add Rahul Sharma 3000
+  const addMatch = text.match(/^add\s+(?:customer\s+)?(.+?)\s+(?:with\s+)?(?:monthly\s+charge\s+)?(?:₹|\$)?(\d+)(?:\s+monthly|\s+charge|\s+₹|\$)?$/i) ??
                    text.match(/^add\s+(?:customer\s+)?(.+?)\s+(?:with\s+)?(?:₹|\$)?(\d+)/i);
   if (addMatch) {
     const name = addMatch[1].replace(/with|charge|monthly|₹|\$/gi, "").trim();
