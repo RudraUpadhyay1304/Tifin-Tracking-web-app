@@ -3,6 +3,7 @@ import Image from "next/image";
 import { dict } from "@/lib/i18n";
 import { getServerUser, getSupabaseAnonKeyConfigured } from "@/lib/server/supabase";
 import { serverLang } from "@/lib/server/lang";
+import { AnonLoginRedirect } from "@/components/AnonLoginRedirect";
 
 export const dynamic = "force-dynamic";
 
@@ -37,19 +38,7 @@ export default async function LoginPage({
           {t.authSetup}
         </div>
       ) : (
-        <div className="w-full max-w-sm text-center">
-          <div className="rounded-2xl border border-orange-100 bg-orange-50 p-4 text-sm font-medium text-orange-800 dark:border-orange-900/30 dark:bg-orange-950/20 dark:text-orange-300">
-            Initializing per-device session...
-          </div>
-
-          {error === "auth" && (
-            <p className="mt-3 text-center text-sm text-red-500">{t.signInError}</p>
-          )}
-
-          <p className="mt-6 text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
-            {t.privateWorkspace}
-          </p>
-        </div>
+        <AnonLoginRedirect />
       )}
     </div>
   );

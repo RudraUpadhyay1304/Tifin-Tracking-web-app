@@ -63,7 +63,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw signInError || new Error("Failed to sign in anonymous user");
     }
 
-    return res.status(200).json({ access_token: signInData.session.access_token });
+    return res.status(200).json({
+      access_token: signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token,
+    });
   } catch (error: any) {
     console.error("create-anon-user error:", error);
     return res.status(500).json({ error: error?.message || "Internal server error" });
