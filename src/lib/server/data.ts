@@ -31,7 +31,7 @@ export async function getSettings(): Promise<Settings> {
         .from("settings")
         .upsert(
           { sunday_off: true, business_name: "My Tiffin Service" },
-          { onConflict: "user_id", ignoreDuplicates: true },
+          { ignoreDuplicates: true },
         );
       const { data: inserted } = await db.from("settings").select("*").maybeSingle();
       data = inserted;

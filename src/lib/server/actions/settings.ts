@@ -34,11 +34,10 @@ export async function saveSettings(
     const data = settingsSchema.parse(input);
     const { db, userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
-    if (userId) payload.user_id = userId;
 
-    let { error } = await db.from("settings").upsert(payload, { onConflict: "user_id" });
+    let { error } = await db.from("settings").upsert(payload);
     if (error) {
-      const adminRes = await supabaseAdmin().from("settings").upsert(payload, { onConflict: "user_id" });
+      const adminRes = await supabaseAdmin().from("settings").upsert(payload);
       if (adminRes.error) throw adminRes.error;
     }
     revalidatePath("/", "layout");

@@ -34,11 +34,11 @@ async function getDbAndUserId() {
 export async function saveMenu(items: { day_of_week: number; item: string }[]): Promise<ActionResult> {
   try {
     const data = menuSchema.parse({ items });
-    const { db, userId } = await getDbAndUserId();
-    const rows = data.items.map((item) => (userId ? { ...item, user_id: userId } : item));
-    let { error } = await db.from("menu").upsert(rows, { onConflict: "user_id,day_of_week" });
+    const { db } = await getDbAndUserId();
+    const rows = data.items;
+    let { error } = await db.from("menu").upsert(rows);
     if (error) {
-      await supabaseAdmin().from("menu").upsert(rows, { onConflict: "user_id,day_of_week" });
+      await supabaseAdmin().from("menu").upsert(rows);
     }
     revalidatePath("/", "layout");
     return { ok: true };

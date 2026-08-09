@@ -40,7 +40,6 @@ export async function addHoliday(input: z.infer<typeof holidaySchema>): Promise<
       end_date: data.end_date,
       reason: data.reason,
     };
-    if (userId) payload.user_id = userId;
 
     let { error } = await db.from("holidays").insert(payload);
     if (error) {

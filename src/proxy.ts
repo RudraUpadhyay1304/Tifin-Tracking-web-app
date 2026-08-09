@@ -20,11 +20,12 @@ export async function proxy(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const pathname = request.nextUrl.pathname;
 
-  // Public / unauthenticated paths (auth flow + cron backup).
+  // Public / unauthenticated paths (auth flow + cron backup + anon user endpoint).
   const isPublic =
     pathname.startsWith("/login") ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/api/sync") ||
+    pathname.startsWith("/api/create-anon-user") ||
     pathname === "/favicon.ico";
 
   let response = NextResponse.next({ request: { headers: request.headers } });
