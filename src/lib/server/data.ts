@@ -27,11 +27,14 @@ export async function getSettings(): Promise<Settings> {
   try {
     let { data } = await db.from("settings").select("*").maybeSingle();
     if (!data) {
+      const { data: { user } } = await db.auth.getUser();
+      const seedPayload: Record<string, unknown> = { sunday_off: true, business_name: "My Tiffin Service" };
+      if (user?.id) seedPayload.user_id = user.id;
       await db
         .from("settings")
         .upsert(
-          { sunday_off: true, business_name: "My Tiffin Service" },
-          { ignoreDuplicates: true },
+          seedPayload,
+          { onConflict: "user_id", ignoreDuplicates: true },
         );
       const { data: inserted } = await db.from("settings").select("*").maybeSingle();
       data = inserted;

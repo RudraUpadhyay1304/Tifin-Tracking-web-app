@@ -33,6 +33,7 @@ export async function addPayment(input: z.infer<typeof paymentSchema>): Promise<
     const data = paymentSchema.parse(input);
     const { db, userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
+    if (userId) payload.user_id = userId;
 
     let { error } = await db.from("payments").insert(payload);
     if (error) {

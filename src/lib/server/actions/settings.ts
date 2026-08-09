@@ -34,6 +34,7 @@ export async function saveSettings(
     const data = settingsSchema.parse(input);
     const { db, userId } = await getDbAndUserId();
     const payload: Record<string, unknown> = { ...data };
+    if (userId) payload.user_id = userId;
 
     let { error } = await db.from("settings").upsert(payload);
     if (error) {

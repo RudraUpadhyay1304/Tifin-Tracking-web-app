@@ -60,6 +60,7 @@ export async function setDayStatus(
         }
       } else {
         const payload: Record<string, unknown> = { customer_id: customerId, date, status: s };
+        if (userId) payload.user_id = userId;
         let { error } = await db.from("calendar_days").insert(payload);
         if (error) {
           await supabaseAdmin().from("calendar_days").insert(payload);

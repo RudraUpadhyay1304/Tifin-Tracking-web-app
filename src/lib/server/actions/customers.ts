@@ -57,6 +57,7 @@ export async function addCustomer(input: z.infer<typeof customerSchema>): Promis
     const payload: Record<string, unknown> = {
       ...data,
       joining_date: data.joining_date ?? null,
+      user_id: userId,
     };
 
     let { error } = await db.from("customers").insert(payload);

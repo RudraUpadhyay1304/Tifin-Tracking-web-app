@@ -34,8 +34,8 @@ async function getDbAndUserId() {
 export async function saveMenu(items: { day_of_week: number; item: string }[]): Promise<ActionResult> {
   try {
     const data = menuSchema.parse({ items });
-    const { db } = await getDbAndUserId();
-    const rows = data.items;
+    const { db, userId } = await getDbAndUserId();
+    const rows = userId ? data.items.map((item) => ({ ...item, user_id: userId })) : data.items;
     let { error } = await db.from("menu").upsert(rows);
     if (error) {
       await supabaseAdmin().from("menu").upsert(rows);

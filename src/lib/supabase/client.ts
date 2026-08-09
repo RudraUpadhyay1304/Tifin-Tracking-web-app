@@ -2,8 +2,9 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-// Browser Supabase client used only for starting Google OAuth and signing out.
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const DEFAULT_URL = "https://feyqoeyllmbpnbdkvrur.supabase.co";
+
+const URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_URL).replace(/\/+$/, "");
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export function clientConfigured(): boolean {
