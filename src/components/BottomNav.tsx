@@ -52,21 +52,32 @@ export function BottomNav({ t }: { t: T }) {
     { href: "/more", label: t.more, icon: icons.more },
   ];
 
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/" || pathname === "/dashboard";
+    }
+    return pathname === href || Boolean(pathname?.startsWith(href + "/"));
+  };
+
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0e1626]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-md items-stretch justify-between px-2">
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-white/85 dark:bg-[#0a0f1c]/85 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-md items-stretch justify-between px-2 pt-1.5">
         {items.map((item) => {
-          const active =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && Boolean(pathname?.startsWith(item.href)));
+          const active = isActive(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 ${
+              aria-current={active ? "page" : undefined}
+              className={`pressable relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 ${
                 active ? "text-orange-500" : "text-slate-400 dark:text-slate-500"
               }`}
             >
+              <span
+                className={`absolute -top-1.5 h-1 w-8 rounded-full bg-orange-500 transition-opacity ${
+                  active ? "opacity-100" : "opacity-0"
+                }`}
+              />
               {item.icon}
               <span className="text-[10px] font-semibold">{item.label}</span>
             </Link>

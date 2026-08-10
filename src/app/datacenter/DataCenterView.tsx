@@ -225,12 +225,12 @@ function CustomersTab({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.search}
-          className="h-10 flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] px-3 text-sm outline-none focus:border-orange-400"
+          className="h-10 flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 text-sm outline-none focus:border-orange-400"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value)}
-          className="h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] px-2 text-sm outline-none"
+          className="h-10 rounded-xl border border-[var(--line)] bg-[var(--card)] px-2 text-sm outline-none"
         >
           <option value="name">{t.name}</option>
           <option value="charge">{t.monthlyCharge}</option>
@@ -246,7 +246,7 @@ function CustomersTab({
 
       <Card className="overflow-x-auto p-0">
         <table className="w-full min-w-[560px] text-sm">
-          <thead className="sticky top-0 bg-white dark:bg-[#131c31]">
+          <thead className="sticky top-0 bg-[var(--card)]">
             <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400">
               <th className="px-3 py-2.5">{t.name}</th>
               <th className="px-2 py-2.5">₹/mo</th>
@@ -386,7 +386,7 @@ function CalendarTab({
         <table className="w-full text-sm">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-white dark:bg-[#131c31] px-3 py-2 text-left text-[11px] uppercase text-slate-400 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
+              <th className="sticky left-0 z-10 bg-[var(--card)] px-3 py-2 text-left text-[11px] uppercase text-slate-400 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
                 {t.name}
               </th>
               {grid.map((d, i) => (
@@ -404,7 +404,7 @@ function CalendarTab({
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {active.map((c) => (
               <tr key={c.id}>
-                <td className="sticky left-0 z-10 max-w-[110px] truncate bg-white dark:bg-[#131c31] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
+                <td className="sticky left-0 z-10 max-w-[110px] truncate bg-[var(--card)] px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-[1px_0_0_rgba(0,0,0,0.05)]">
                   {c.name}
                 </td>
                 {grid.map((d, i) => (
@@ -468,7 +468,7 @@ function PaymentsTab({
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="h-10 flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] px-3 text-sm outline-none"
+          className="h-10 flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 text-sm outline-none"
         >
           <option value="month">{t.thisMonth}</option>
           <option value="all">{t.all}</option>
@@ -483,7 +483,7 @@ function PaymentsTab({
       ) : (
         <Card className="overflow-x-auto p-0">
           <table className="w-full min-w-[480px] text-sm">
-            <thead className="bg-white dark:bg-[#131c31]">
+            <thead className="bg-[var(--card)]">
               <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400">
                 <th className="px-3 py-2.5">{t.today}</th>
                 <th className="px-2 py-2.5">{t.name}</th>
@@ -627,7 +627,7 @@ function AnalyticsTab({
 
       <Card className="overflow-x-auto p-0">
         <table className="w-full min-w-[520px] text-sm">
-          <thead className="bg-white dark:bg-[#131c31]">
+          <thead className="bg-[var(--card)]">
             <tr className="text-left text-[11px] uppercase tracking-wide text-slate-400">
               <th className="px-3 py-2.5">{t.name}</th>
               <th className="px-2 py-2.5">✓</th>
@@ -655,10 +655,10 @@ function AnalyticsTab({
       </Card>
 
       <div className="mt-3 flex gap-3">
-        <button onClick={() => exportData(false)} className="h-11 flex-1 rounded-xl bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <button onClick={() => exportData(false)} className="h-11 flex-1 rounded-xl bg-[var(--card)] border border-[var(--line)] text-sm font-semibold text-slate-700 dark:text-slate-200">
           {t.exportCSV}
         </button>
-        <button onClick={() => exportData(true)} className="h-11 flex-1 rounded-xl bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <button onClick={() => exportData(true)} className="h-11 flex-1 rounded-xl bg-[var(--card)] border border-[var(--line)] text-sm font-semibold text-slate-700 dark:text-slate-200">
           {t.exportExcel}
         </button>
       </div>
@@ -668,7 +668,7 @@ function AnalyticsTab({
 
 function Stat({ label, value, red }: { label: string; value: string; red?: boolean }) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-[#131c31] border border-slate-100 dark:border-slate-800 p-2.5 shadow-sm">
+    <div className="rounded-2xl bg-[var(--card)] border border-[var(--line)] p-2.5 shadow-sm">
       <p className={`text-sm font-extrabold ${red ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>{value}</p>
       <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400">{label}</p>
     </div>

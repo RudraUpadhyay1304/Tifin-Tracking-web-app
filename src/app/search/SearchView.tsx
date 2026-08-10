@@ -46,7 +46,7 @@ export function SearchView({
   }, [query]);
 
   return (
-    <div>
+    <div className="rise">
       <TopBar t={t} title={t.globalSearch} theme={theme} />
 
       <div className="relative mb-4">
@@ -55,7 +55,7 @@ export function SearchView({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.searchByName}
           autoFocus
-          className="h-13 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] px-4 pr-4 text-[15px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20"
+          className="h-13 w-full rounded-2xl border border-[var(--line)] bg-[var(--card)] px-4 pr-4 text-base text-slate-900 dark:text-slate-100 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 transition-shadow"
         />
       </div>
 

@@ -71,14 +71,14 @@ export function MoreView({
   ];
 
   return (
-    <div>
+    <div className="rise">
       <TopBar t={t} title={t.more} theme={theme} />
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-white dark:bg-[#131c31] border border-slate-100 dark:border-slate-800 shadow-sm text-orange-500 active:scale-95 transition-transform"
+            className="pressable flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-[var(--card)] border border-[var(--line)] shadow-sm text-orange-500"
           >
             {item.icon}
             <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">

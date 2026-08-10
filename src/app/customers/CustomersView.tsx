@@ -37,7 +37,7 @@ export function CustomersView({
     s === "active" ? "green" : s === "paused" ? "orange" : "slate";
 
   return (
-    <div>
+    <div className="rise">
       <TopBar t={t} title={t.customers} theme={theme} />
 
       <div className="relative mb-4">
@@ -45,7 +45,7 @@ export function CustomersView({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.searchByName}
-          className="h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] pl-11 pr-4 text-[15px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20"
+          className="h-12 w-full rounded-2xl border border-[var(--line)] bg-[var(--card)] pl-11 pr-4 text-base text-slate-900 dark:text-slate-100 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 transition-shadow"
         />
         <svg
           viewBox="0 0 24 24"
@@ -66,7 +66,7 @@ export function CustomersView({
           {filtered.map((c) => (
             <li key={c.id}>
               <Link href={`/customers/${c.id}`}>
-                <Card className="flex items-center gap-3 p-3.5 active:bg-slate-50 dark:active:bg-white/5 transition-colors">
+                <Card className="pressable flex items-center gap-3 p-3.5 active:bg-slate-50 dark:active:bg-white/5">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 text-sm font-bold">
                     {initials(c.name)}
                   </div>

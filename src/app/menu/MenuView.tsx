@@ -61,7 +61,7 @@ export function MenuView({
                 value={m.item}
                 onChange={(e) => setItem(m.day_of_week, e.target.value)}
                 placeholder={t.menuItemPlaceholder}
-                className="h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2540] px-4 text-[15px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20"
+                className="h-12 w-full rounded-2xl border border-[var(--line)] bg-[var(--card)] px-4 text-base text-slate-900 dark:text-slate-100 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 transition-shadow"
               />
             </li>
           ))}

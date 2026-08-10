@@ -164,13 +164,13 @@ export function FinanceView({
       <div className="mt-5 grid grid-cols-2 gap-3">
         <button
           onClick={exportCSV}
-          className="h-12 rounded-2xl bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-700 font-semibold text-sm text-slate-700 dark:text-slate-200"
+          className="pressable h-12 rounded-2xl bg-[var(--card)] border border-[var(--line)] font-semibold text-sm text-slate-700 dark:text-slate-200"
         >
           {t.exportCSV}
         </button>
         <button
           onClick={exportExcel}
-          className="h-12 rounded-2xl bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-700 font-semibold text-sm text-slate-700 dark:text-slate-200"
+          className="pressable h-12 rounded-2xl bg-[var(--card)] border border-[var(--line)] font-semibold text-sm text-slate-700 dark:text-slate-200"
         >
           {t.exportExcel}
         </button>

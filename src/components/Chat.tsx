@@ -109,7 +109,7 @@ export function Chat({
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                 m.role === "user"
                   ? "bg-orange-500 text-white rounded-br-md"
-                  : "bg-white dark:bg-[#131c31] border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-md shadow-sm"
+                  : "bg-[var(--card)] border border-[var(--line)] text-slate-700 dark:text-slate-200 rounded-bl-md shadow-sm"
               }`}
             >
               {m.text}
@@ -163,12 +163,12 @@ export function Chat({
             }}
             placeholder={t.aiPlaceholder}
             rows={1}
-            className="max-h-28 min-h-12 flex-1 resize-none rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#131c31] px-4 py-3 text-[15px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20"
+            className="max-h-28 min-h-12 flex-1 resize-none rounded-2xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base text-slate-900 dark:text-slate-100 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 transition-shadow"
           />
           <button
             onClick={() => send()}
             disabled={thinking || !input.trim()}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white active:bg-orange-600 disabled:opacity-40"
+            className="pressable flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-500 text-white active:bg-orange-600 disabled:opacity-40 disabled:pointer-events-none"
             aria-label={t.aiTitle}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">

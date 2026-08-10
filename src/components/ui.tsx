@@ -24,7 +24,7 @@ export function Button({
     primary:
       "bg-orange-500 text-white active:bg-orange-600 shadow-sm shadow-orange-500/30",
     secondary:
-      "bg-white dark:bg-[#1a2540] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 active:bg-slate-50 dark:active:bg-[#202c4d]",
+      "bg-[var(--card)] text-slate-800 dark:text-slate-100 border border-[var(--line)] active:bg-slate-50 dark:active:bg-white/5",
     danger: "bg-red-500 text-white active:bg-red-600 shadow-sm shadow-red-500/30",
     ghost: "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10",
   }[variant];
@@ -33,7 +33,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`h-12 rounded-2xl px-4 text-[15px] font-semibold transition-colors disabled:opacity-40 ${
+      className={`pressable h-12 rounded-2xl px-4 text-[15px] font-semibold transition-colors disabled:opacity-40 disabled:pointer-events-none ${
         block ? "w-full" : ""
       } ${styles} ${className}`}
     >
@@ -52,7 +52,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl bg-[var(--card)] p-4 shadow-sm border border-slate-100 dark:border-slate-800 ${className}`}
+      className={`rounded-2xl bg-[var(--card)] p-4 shadow-sm border border-[var(--line)] ${className}`}
     >
       {children}
     </div>
@@ -75,8 +75,8 @@ export function StatCard({
     <div
       className={`rounded-2xl p-3.5 ${
         accent
-          ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-sm shadow-orange-500/30"
-          : "bg-[var(--card)] border border-slate-100 dark:border-slate-800 shadow-sm"
+          ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md shadow-orange-500/30"
+          : "bg-[var(--card)] border border-[var(--line)] shadow-sm"
       }`}
     >
       <div
@@ -100,7 +100,7 @@ export function StatCard({
 
 /* ---------- Inputs ---------- */
 const fieldBase =
-  "w-full h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a2540] px-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20";
+  "w-full h-12 rounded-2xl border border-[var(--line)] bg-[var(--card)] px-4 text-[15px] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/20 transition-shadow";
 
 export function Input({
   label,
@@ -167,7 +167,7 @@ export function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`relative h-8 w-14 rounded-full transition-colors ${
+      className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${
         checked ? "bg-orange-500" : "bg-slate-300 dark:bg-slate-600"
       }`}
     >
@@ -231,15 +231,17 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
+        className="fade-in absolute inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white dark:bg-[#131c31] p-5 pb-8 shadow-2xl sm:rounded-3xl sm:pb-5">
-        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
-        {title && (
-          <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
-        )}
-        {children}
+      <div className="sheet-up relative z-10 flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--card)] shadow-2xl sm:rounded-3xl">
+        <div className="mx-auto mt-2.5 mb-1 h-1.5 w-10 shrink-0 rounded-full bg-slate-200 dark:bg-slate-700 sm:hidden" />
+        <div className="overflow-y-auto p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-5">
+          {title && (
+            <h2 className="mb-4 text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+          )}
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -256,15 +258,15 @@ export function Segmented({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex gap-1 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1">
+    <div className="flex gap-1 rounded-2xl bg-slate-100 dark:bg-white/5 p-1">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
-          className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+          className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition-all ${
             value === o.value
-              ? "bg-white dark:bg-[#1a2540] text-orange-600 dark:text-orange-400 shadow-sm"
+              ? "bg-[var(--card)] text-orange-600 dark:text-orange-400 shadow-sm"
               : "text-slate-500 dark:text-slate-400"
           }`}
         >

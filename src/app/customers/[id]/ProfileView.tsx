@@ -220,7 +220,7 @@ export function ProfileView({
 
 function MiniStat({ label, value, color }: { label: string; value: React.ReactNode; color: string }) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-[#131c31] border border-slate-100 dark:border-slate-800 p-3 text-center shadow-sm">
+    <div className="rounded-2xl bg-[var(--card)] border border-[var(--line)] p-3 text-center shadow-sm">
       <div className={`text-base font-extrabold ${color}`}>{value}</div>
       <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
         {label}

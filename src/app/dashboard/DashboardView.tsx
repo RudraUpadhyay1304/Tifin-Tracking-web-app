@@ -84,7 +84,7 @@ export function DashboardView({
   ];
 
   return (
-    <div>
+    <div className="rise">
       <TopBar t={t} title={settings.business_name || t.appName} theme={theme} />
       <h2 className="mb-3 text-2xl font-extrabold text-slate-900 dark:text-white">
         {t.today} 🍱
@@ -161,7 +161,7 @@ export function DashboardView({
 
 function QuickAction({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-white dark:bg-[#131c31] border border-slate-100 dark:border-slate-800 shadow-sm text-orange-500 active:scale-95 transition-transform">
+    <div className="pressable flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-[var(--card)] border border-[var(--line)] shadow-sm text-orange-500">
       {icon}
       <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{label}</span>
     </div>

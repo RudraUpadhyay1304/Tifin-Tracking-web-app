@@ -43,7 +43,7 @@ export default async function RootLayout({
     <html lang={lang} className={theme === "dark" ? "dark" : undefined}>
       <body className="min-h-dvh flex flex-col">
         <Providers />
-        <main className="mx-auto w-full max-w-md flex-1 px-4 pb-28 pt-4">
+        <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]">
           {children}
         </main>
         <BottomNav t={dict[lang]} />
